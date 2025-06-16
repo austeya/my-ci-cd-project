@@ -1,0 +1,27 @@
+# .github/workflows/ansible.yml
+
+name: Run Ansible Playbook
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Ansible
+      run: sudo apt-get update && sudo apt-get install -y ansible
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Run Ansible Playbook
+      run: ansible-playbook -i "${{ secrets.REMOTE_HOST }}," deploy.yml -u ${{ secrets.REMOTE_USER }} --private-key ~/.ssh/id_rsa
